@@ -430,3 +430,48 @@ if hmac.compare_digest(received_mac, recalculated_mac):
 else:
     print("\nTampering detected")
 
+
+from cryptography.hazmat.primitives.asymmetric import rsa
+
+private_key = rsa.generate_private_key(
+    public_exponent=65537,
+    key_size=3072
+)
+
+public_key = private_key.public_key()
+
+print("RSA keys generated")
+
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
+
+message = b"Hello, this is a digital signature."
+
+signature = private_key.sign(
+    message,
+    padding.PSS(
+        mgf=padding.MGF1(hashes.SHA256()),
+        salt_length=32
+    ),
+    hashes.SHA256()
+)
+
+print("Signature:", signature.hex())
+
+from cryptography.exceptions import InvalidSignature
+
+try:
+    public_key.verify(
+        signature,
+        message,
+        padding.PSS(
+            mgf=padding.MGF1(hashes.SHA256()),
+            salt_length=32
+        ),
+        hashes.SHA256()
+    )
+
+    print("Signature is VALID")
+
+except InvalidSignature:
+    print("Signature is INVALID")
